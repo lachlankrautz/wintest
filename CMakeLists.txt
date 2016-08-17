@@ -47,10 +47,10 @@ IF (WIN32)
 ENDIF ()
 
 # Set main exe source files
-SET(SOURCE_FILES main.cpp)
+SET(SOURCE_FILES main.cpp Win_Key_Listener.cpp Win_Key_Listener.h)
 
 # Create executable
 ADD_EXECUTABLE(${PROJECT_NAME} ${SOURCE_FILES})
 
 # Link libraries to executable
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${INTERNAL_LIST} PSAPI)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${INTERNAL_LIST})
