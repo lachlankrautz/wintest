@@ -1,0 +1,56 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.2)
+
+# Dynamic project name from current folder name
+GET_FILENAME_COMPONENT(PROJECT_FOLDER_NAME ${CMAKE_SOURCE_DIR} NAME)
+STRING(REPLACE " " "_" ProjectId ${PROJECT_FOLDER_NAME})
+PROJECT("testing")
+
+# Output to bin
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+
+# Use our modified FindSDL2* modules
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${${PROJECT_NAME}_SOURCE_DIR}/cmake")
+
+# Use c++11
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+# Pkg-config has better support for many libs
+INCLUDE(FindPkgConfig)
+
+# Lib macros
+MACRO(FIND_PACKAGE_ADD_LIST LIB LIST)
+    FIND_PACKAGE(${LIB} REQUIRED)
+    INCLUDE_DIRECTORIES(${${LIB}_INCLUDE_DIRS})
+    LIST(APPEND ${LIST} ${${LIB}_LIBRARIES})
+ENDMACRO()
+MACRO(PKG_SEARCH_ADD_LIST LIB LIST)
+    STRING(TOUPPER ${LIB} LIB_PREFIX)
+    PKG_SEARCH_MODULE(${LIB_PREFIX} REQUIRED ${LIB})
+    INCLUDE_DIRECTORIES(${${LIB_PREFIX}_INCLUDE_DIRS})
+    LIST(APPEND ${LIST} ${${LIB_PREFIX}_LIBRARIES})
+ENDMACRO()
+MACRO(DIRECTORY_ADD_LIST DIRECTORY LIST)
+    ADD_SUBDIRECTORY(${DIRECTORY})
+    LIST(APPEND ${LIST} ${DIRECTORY})
+ENDMACRO()
+
+IF (WIN32)
+
+    # Prevent windows binary from opening a console window
+    IF(CMAKE_BUILD_TYPE STREQUAL "Release")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--subsystem,windows")
+    ENDIF()
+
+    # Bundle implicit libs into binary
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+
+ENDIF ()
+
+# Set main exe source files
+SET(SOURCE_FILES main.cpp)
+
+# Create executable
+ADD_EXECUTABLE(${PROJECT_NAME} ${SOURCE_FILES})
+
+# Link libraries to executable
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${INTERNAL_LIST} PSAPI)
