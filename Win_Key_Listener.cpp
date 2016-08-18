@@ -5,19 +5,31 @@
 #include "Win_Key_Listener.h"
 #include <iostream>
 
-LRESULT CALLBACK Win_Key_Listener::hook_callback(int nCode, WPARAM wParam, LPARAM lParam)
-{
-    if (nCode >= 0) {
-        if (wParam == WM_KEYDOWN) {
-            // lParam is the pointer to the struct containing the data needed, so cast and assign it to kdbStruct.
-            kbd_struct_ = *((KBDLLHOOKSTRUCT*)lParam);
-            handle_key(kbd_struct_.vkCode);
+namespace {
+
+    HHOOK hook;
+
+    LRESULT CALLBACK hook_callback(int nCode, WPARAM wParam, LPARAM lParam)
+    {
+        if (nCode>=0) {
+            if (wParam==WM_KEYDOWN) {
+                // lParam is the pointer to the struct containing the data needed, so cast and assign it to kdbStruct.
+                KBDLLHOOKSTRUCT* kbd_struct = (KBDLLHOOKSTRUCT*) lParam;
+                Win_Key_Listener& l = Win_Key_Listener::get_instance();
+                l.handle_key(kbd_struct->vkCode);
+            }
         }
+        return CallNextHookEx(hook, nCode, wParam, lParam);
     }
-    return CallNextHookEx(hook_, nCode, wParam, lParam);
 }
 
-void Win_Key_Listener::handle_key (DWORD code)
+Win_Key_Listener& Win_Key_Listener::get_instance()
+{
+    static Win_Key_Listener instance;
+    return instance;
+}
+
+void Win_Key_Listener::handle_key(DWORD code)
 {
     switch (code) {
     case VK_F2:
@@ -32,11 +44,12 @@ void Win_Key_Listener::handle_key (DWORD code)
     }
 }
 
-void Win_Key_Listener::start_listening(bool &running)
+void Win_Key_Listener::start_listening()
 {
-    running_ = running;
-    std::thread t([] {
-        if (!(hook_ = SetWindowsHookEx(WH_KEYBOARD_LL, hook_callback, NULL, 0))) {
+    listening_ = true;
+    std::thread t([&] {
+        hook = SetWindowsHookEx(WH_KEYBOARD_LL, hook_callback, NULL, 0);
+        if (!hook) {
             std::cout << "failed to install hook" << std::endl;
         }
         MSG msg;
@@ -47,6 +60,12 @@ void Win_Key_Listener::start_listening(bool &running)
 
 void Win_Key_Listener::stop_listening()
 {
-    UnhookWindowsHookEx(hook_);
-    running_ = false;
+    UnhookWindowsHookEx(hook);
+    listening_ = false;
 }
+
+bool Win_Key_Listener::is_listening()
+{
+    return listening_;
+}
+

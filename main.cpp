@@ -2,10 +2,9 @@
 
 int main()
 {
-    bool running = true;
-    Win_Key_Listener l;
-    l.start_listening(&running);
+    Win_Key_Listener &l = Win_Key_Listener::get_instance();
+    l.start_listening();
 
-    while (running) { }
+    while (l.is_listening()) { }
     return 0;
 }

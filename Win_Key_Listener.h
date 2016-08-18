@@ -11,14 +11,17 @@
 class Win_Key_Listener {
 
 public:
-    LRESULT CALLBACK hook_callback(int nCode, WPARAM wParam, LPARAM lParam);
-    void start_listening(bool &running);
+    static Win_Key_Listener& get_instance();
+    void start_listening();
     void stop_listening();
-private:
+    bool is_listening();
     void handle_key(DWORD code);
-    HHOOK hook_;
-    KBDLLHOOKSTRUCT kbd_struct_;
-    bool &running_;
+private:
+    Win_Key_Listener(): listening_(false) {}
+    bool listening_;
+public:
+    Win_Key_Listener(Win_Key_Listener const&) = delete;
+    void operator=(Win_Key_Listener const &)  = delete;
 };
 
 #endif //WINTEST_WINKEYLISTENER_H
