@@ -11,13 +11,14 @@ namespace {
 
     LRESULT CALLBACK hook_callback(int nCode, WPARAM wParam, LPARAM lParam)
     {
-        if (nCode>=0) {
-            if (wParam==WM_KEYDOWN) {
-                // lParam is the pointer to the struct containing the data needed, so cast and assign it to kdbStruct.
-                KBDLLHOOKSTRUCT* kbd_struct = (KBDLLHOOKSTRUCT*) lParam;
-                Win_Key_Listener& l = Win_Key_Listener::get_instance();
-                l.handle_key(kbd_struct->vkCode);
-            }
+        if (nCode < 0) {
+            return CallNextHookEx(hook, nCode, wParam, lParam);
+        }
+        if (wParam==WM_KEYDOWN) {
+            // lParam is the pointer to the struct containing the data needed, so cast and assign it to kdbStruct.
+            KBDLLHOOKSTRUCT* kbd_struct = (KBDLLHOOKSTRUCT*) lParam;
+            Win_Key_Listener& l = Win_Key_Listener::get_instance();
+            l.handle_key(kbd_struct->vkCode);
         }
         return CallNextHookEx(hook, nCode, wParam, lParam);
     }
@@ -52,8 +53,15 @@ void Win_Key_Listener::start_listening()
         if (!hook) {
             std::cout << "failed to install hook" << std::endl;
         }
+        std::cout << "listening" << std::endl;
+        // Don't mind this, it is a meaningless loop to keep a console application running.
+        // I used this to test the keyboard hook functionality. If you want to test it, keep it in ;)
         MSG msg;
-        GetMessage(&msg, NULL, 0, 0);
+        while (GetMessage(&msg, NULL, 0, 0)) {
+            std::cout << "get message" << std::endl;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     });
     t.detach();
 }
@@ -69,3 +77,7 @@ bool Win_Key_Listener::is_listening()
     return listening_;
 }
 
+Win_Key_Listener::~Win_Key_Listener()
+{
+    UnhookWindowsHookEx(hook);
+}

@@ -22,6 +22,8 @@ private:
 public:
     Win_Key_Listener(Win_Key_Listener const&) = delete;
     void operator=(Win_Key_Listener const &)  = delete;
+
+    virtual ~Win_Key_Listener();
 };
 
 #endif //WINTEST_WINKEYLISTENER_H
